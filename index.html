@@ -789,14 +789,14 @@ function renderSettings(){
     row.className='setting-row';
     row.innerHTML=`
       <div class="color-dot" style="background:${s.color}" onclick="selColorTgt('s',${i})" id="sc-${i}"></div>
-      <input type="text" value="${s.name}" oninput="editSubjects[${i}].name=this.value">
-      <input type="number" value="${s.goal||0}" min="0" max="300" step="5" oninput="editSubjects[${i}].goal=+this.value">
+      <input type="text" value="${s.name}" oninput="updateSubjectName(${i},this.value)">
+      <input type="number" value="${s.goal||0}" min="0" max="300" step="5" oninput="updateSubjectGoal(${i},this.value)">
       <span style="font-size:10px;color:var(--text3)">분</span>
       <button onclick="removeSubj(${i})" style="padding:4px 8px;font-size:13px;color:var(--red);background:none;border:none;cursor:pointer"><i class="ti ti-trash"></i></button>`;
     sl.appendChild(row);
   });
   const ag=document.getElementById('activity-goals');
-  ag.innerHTML=FIXED_CATS.map(c=>`<div class="setting-row"><span style="font-size:12px;font-weight:600;color:${c.color};width:64px;flex-shrink:0">${c.name}</span><input type="number" value="${editActGoals[c.id]||0}" min="0" max="480" step="5" oninput="editActGoals['${c.id}']=+this.value"><span style="font-size:10px;color:var(--text3)">분</span></div>`).join('');
+  ag.innerHTML=FIXED_CATS.map(c=>`<div class="setting-row"><span style="font-size:12px;font-weight:600;color:${c.color};width:64px;flex-shrink:0">${c.name}</span><input type="number" value="${editActGoals[c.id]||0}" min="0" max="480" step="5" oninput="updateActGoal('${c.id}',this.value)"><span style="font-size:10px;color:var(--text3)">분</span></div>`).join('');
   const pal=document.getElementById('color-palette');
   pal.innerHTML=PALETTE.map(c=>`<div class="color-dot" style="background:${c}" onclick="pickColor('${c}')" data-c="${c}"></div>`).join('');
   updateRoleUI();
@@ -814,6 +814,9 @@ window.addSubject = function(){
   renderSettings();
 };
 window.removeSubj = function(i){ editSubjects.splice(i,1); renderSettings(); };
+window.updateSubjectName = function(i, val){ editSubjects[i].name = val; };
+window.updateSubjectGoal = function(i, val){ editSubjects[i].goal = +val; };
+window.updateActGoal = function(id, val){ editActGoals[id] = +val; };
 window.saveSettings = async function(){
   subjects=editSubjects.filter(s=>s.name.trim()).map(s=>({...s,name:s.name.trim()}));
   actGoals=editActGoals;
@@ -822,8 +825,6 @@ window.saveSettings = async function(){
   alert('설정이 저장됐어요!');
 };
 window.sendMessage = sendMessage;
-window.editSubjects = editSubjects;
-window.editActGoals = editActGoals;
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 </body>
