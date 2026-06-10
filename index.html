@@ -258,30 +258,33 @@
       <p style="font-size:11px;color:var(--text3);margin-top:8px">역할에 따라 볼 수 있는 기능이 달라져요.</p>
     </div>
 
-    <div class="section-label">공부 과목 설정</div>
-    <div class="card">
-      <div id="subject-list"></div>
-      <button class="add-btn" onclick="addSubject()"><i class="ti ti-plus"></i> 과목 추가</button>
-    </div>
-
-    <div class="section-label">활동 목표 시간 (분/일)</div>
-    <div class="card" id="activity-goals"></div>
-
-    <div class="section-label">색상 선택</div>
-    <div class="card">
-      <div style="display:flex;flex-wrap:wrap;gap:8px" id="color-palette"></div>
-    </div>
-
-    <button class="save-btn" style="background:var(--accent);margin-top:4px" onclick="saveSettings()">설정 저장</button>
-
-    <!-- 부모 전용: 메시지 보내기 -->
-    <div id="parent-msg-section" style="display:none">
+    <!-- 부모 전용 섹션 -->
+    <div id="section-parent-only">
+      <div class="section-label">공부 과목 설정 <span style="font-size:10px;color:var(--text3);font-weight:400">(과목명·색상 관리)</span></div>
+      <div class="card">
+        <div id="subject-list"></div>
+        <button class="add-btn" id="add-subject-btn" onclick="addSubject()"><i class="ti ti-plus"></i> 과목 추가</button>
+      </div>
+      <div class="section-label">색상 선택</div>
+      <div class="card">
+        <div style="display:flex;flex-wrap:wrap;gap:8px" id="color-palette"></div>
+      </div>
       <div class="section-label">아이에게 메시지 보내기</div>
       <div class="card">
         <textarea id="msg-input" rows="3" placeholder="오늘 잘한 점, 격려 메시지를 입력해요 💛"></textarea>
         <button class="save-btn" style="background:var(--accent);margin-top:8px" onclick="sendMessage()">메시지 전송</button>
       </div>
     </div>
+
+    <!-- 아이 전용 섹션 -->
+    <div id="section-child-only">
+      <div class="section-label">과목별 목표 시간 <span style="font-size:10px;color:var(--text3);font-weight:400">(아이가 직접 설정)</span></div>
+      <div class="card" id="subject-goals"></div>
+      <div class="section-label">탐구 활동 설정 <span style="font-size:10px;color:var(--text3);font-weight:400">(이름·목표 시간 자유 변경)</span></div>
+      <div class="card" id="activity-goals"></div>
+    </div>
+
+    <button class="save-btn" style="background:var(--accent);margin-top:12px" onclick="saveSettings()">설정 저장</button>
 
     <button class="action-btn" style="margin-top:16px;color:var(--red);border-color:var(--red)" onclick="logout()">
       <i class="ti ti-logout"></i> 로그아웃
@@ -321,15 +324,22 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 
 // ── 상태 ──────────────────────────────────────────────
-const PALETTE = ['#378ADD','#7F77DD','#1D9E75','#EF9F27','#D4537E','#5DCAA5','#E24B4A','#BA7517','#888780','#D85A30','#639922','#3C3489'];
+const PALETTE = [
+  '#A8C8F0','#B5AEF0','#C4B5F5','#D4AADC',
+  '#A8DFC9','#B5E5B0','#C8EAA0','#D4E89A',
+  '#F5A8B8','#F0B8A8','#F5C4A0','#F0D4A0',
+  '#F5E4A0','#F5D47A','#F0C87A','#F0B870',
+  '#F5B8A8','#EAB0C0','#E8A8C8','#D4A8D8',
+  '#A8D8F0','#A8C4E8','#B0C8F5','#C0B8F0',
+];
 const FIXED_CATS = [
-  {id:'hobby', name:'취미/예술',icon:'ti-palette',   color:'#D4537E', goal:0},
-  {id:'sport', name:'운동',     icon:'ti-ball-football',color:'#1D9E75',goal:0},
-  {id:'read',  name:'독서',     icon:'ti-books',     color:'#EF9F27', goal:30},
-  {id:'family',name:'가족',     icon:'ti-heart',     color:'#5DCAA5', goal:0},
-  {id:'play',  name:'신나게 놀기',icon:'ti-confetti',color:'#888780', goal:0},
-  {id:'rest',  name:'휴식',     icon:'ti-zzz',       color:'#888780', goal:0},
-  {id:'waste', name:'멍때리기', icon:'ti-cloud',      color:'#F09595', goal:0},
+  {id:'hobby', name:'취미/예술',icon:'ti-palette',    color:'#E8A8C8', goal:0},
+  {id:'sport', name:'운동',     icon:'ti-ball-football',color:'#A8DFC9',goal:0},
+  {id:'read',  name:'독서',     icon:'ti-books',      color:'#F5D47A', goal:30},
+  {id:'family',name:'가족',     icon:'ti-heart',      color:'#F5A8B8', goal:0},
+  {id:'play',  name:'신나게 놀기',icon:'ti-confetti', color:'#C8EAA0', goal:0},
+  {id:'rest',  name:'휴식',     icon:'ti-zzz',        color:'#A8C8F0', goal:0},
+  {id:'waste', name:'멍때리기', icon:'ti-cloud',       color:'#D4AADC', goal:0},
 ];
 const DAYS_KO = ['월','화','수','목','금','토','일'];
 const DN = ['일','월','화','수','목','금','토'];
@@ -337,7 +347,7 @@ const DN = ['일','월','화','수','목','금','토'];
 let currentUser = null;
 let isGuest = false;
 let userRole = 'child';
-let subjects = [{id:'s_eng',name:'영어',color:'#378ADD',goal:30},{id:'s_math',name:'수학',color:'#7F77DD',goal:30},{id:'s_sci',name:'과학',color:'#1D9E75',goal:30}];
+let subjects = [{id:'s_eng',name:'영어',color:'#A8C8F0',goal:30},{id:'s_math',name:'수학',color:'#B5AEF0',goal:30},{id:'s_sci',name:'과학',color:'#A8DFC9',goal:30}];
 let actGoals = {};
 let localData = {};
 let selId = null, tempMin = 0, currentTab = 'all', repTab = 'week';
@@ -496,14 +506,20 @@ window.setRole = function(r){
   updateRoleUI();
 };
 function updateRoleUI(){
+  const isParent = userRole==='parent';
   const chip = document.getElementById('role-chip');
-  chip.className='chip '+(userRole==='parent'?'parent':'child');
-  chip.textContent = userRole==='parent'?'부모':'아이';
-  document.getElementById('role-parent-btn').className='tab-pill'+(userRole==='parent'?' on':'');
-  document.getElementById('role-child-btn').className='tab-pill'+(userRole==='child'?' on':'');
-  document.getElementById('parent-msg-section').style.display=userRole==='parent'?'block':'none';
+  chip.className='chip '+(isParent?'parent':'child');
+  chip.textContent = isParent?'부모':'아이';
+  document.getElementById('role-parent-btn').className='tab-pill'+(isParent?' on':'');
+  document.getElementById('role-child-btn').className='tab-pill'+(!isParent?' on':'');
+  // 부모/아이 섹션 전환
+  const sp = document.getElementById('section-parent-only');
+  const sc = document.getElementById('section-child-only');
+  if(sp) sp.style.display = isParent?'block':'none';
+  if(sc) sc.style.display = isParent?'none':'block';
+  // 부모 뷰 탭
   const pNav = document.getElementById('nav-parent');
-  pNav.style.display=userRole==='parent'?'flex':'none';
+  if(pNav) pNav.style.display=isParent?'flex':'none';
 }
 
 // ── 페이지 전환 ───────────────────────────────────────
@@ -782,23 +798,59 @@ async function renderParentView(){
 function renderSettings(){
   editSubjects=subjects.map(s=>({...s}));
   editActGoals={...actGoals};
+
+  // ── 부모: 과목명·색상 편집 ──
   const sl=document.getElementById('subject-list');
-  sl.innerHTML='';
-  editSubjects.forEach((s,i)=>{
-    const row=document.createElement('div');
-    row.className='setting-row';
-    row.innerHTML=`
-      <div class="color-dot" style="background:${s.color}" onclick="selColorTgt('s',${i})" id="sc-${i}"></div>
-      <input type="text" value="${s.name}" oninput="updateSubjectName(${i},this.value)">
-      <input type="number" value="${s.goal||0}" min="0" max="300" step="5" oninput="updateSubjectGoal(${i},this.value)">
-      <span style="font-size:10px;color:var(--text3)">분</span>
-      <button onclick="removeSubj(${i})" style="padding:4px 8px;font-size:13px;color:var(--red);background:none;border:none;cursor:pointer"><i class="ti ti-trash"></i></button>`;
-    sl.appendChild(row);
-  });
-  const ag=document.getElementById('activity-goals');
-  ag.innerHTML=FIXED_CATS.map(c=>`<div class="setting-row"><span style="font-size:12px;font-weight:600;color:${c.color};width:64px;flex-shrink:0">${c.name}</span><input type="number" value="${editActGoals[c.id]||0}" min="0" max="480" step="5" oninput="updateActGoal('${c.id}',this.value)"><span style="font-size:10px;color:var(--text3)">분</span></div>`).join('');
+  if(sl){
+    sl.innerHTML='';
+    editSubjects.forEach((s,i)=>{
+      const row=document.createElement('div');
+      row.className='setting-row';
+      row.innerHTML=`
+        <div class="color-dot" style="background:${s.color}" onclick="selColorTgt('s',${i})" id="sc-${i}"></div>
+        <input type="text" value="${s.name}" oninput="updateSubjectName(${i},this.value)" placeholder="과목명">
+        <button onclick="removeSubj(${i})" style="padding:4px 8px;font-size:13px;color:var(--red);background:none;border:none;cursor:pointer"><i class="ti ti-trash"></i></button>`;
+      sl.appendChild(row);
+    });
+  }
+
+  // ── 부모: 색상 팔레트 ──
   const pal=document.getElementById('color-palette');
-  pal.innerHTML=PALETTE.map(c=>`<div class="color-dot" style="background:${c}" onclick="pickColor('${c}')" data-c="${c}"></div>`).join('');
+  if(pal) pal.innerHTML=PALETTE.map(c=>`<div class="color-dot" style="background:${c}" onclick="pickColor('${c}')" data-c="${c}"></div>`).join('');
+
+  // ── 아이: 과목별 목표 시간 ──
+  const sg=document.getElementById('subject-goals');
+  if(sg){
+    sg.innerHTML='';
+    editSubjects.forEach((s,i)=>{
+      const row=document.createElement('div');
+      row.className='setting-row';
+      row.innerHTML=`
+        <div style="width:12px;height:12px;border-radius:3px;background:${s.color};flex-shrink:0"></div>
+        <span style="font-size:13px;font-weight:600;color:var(--text);flex:1">${s.name}</span>
+        <input type="number" value="${s.goal||0}" min="0" max="300" step="5" oninput="updateSubjectGoal(${i},this.value)">
+        <span style="font-size:10px;color:var(--text3)">분/일</span>`;
+      sg.appendChild(row);
+    });
+  }
+
+  // ── 아이: 탐구 활동 설정 (이름+목표 모두 편집 가능) ──
+  const ag=document.getElementById('activity-goals');
+  if(ag){
+    ag.innerHTML='';
+    editActGoals._cats = editActGoals._cats || FIXED_CATS.map(c=>({id:c.id,name:c.name,color:c.color,goal:actGoals[c.id]||0}));
+    editActGoals._cats.forEach((c,i)=>{
+      const row=document.createElement('div');
+      row.className='setting-row';
+      row.innerHTML=`
+        <div style="width:12px;height:12px;border-radius:3px;background:${c.color};flex-shrink:0"></div>
+        <input type="text" value="${c.name}" oninput="updateActName(${i},this.value)" style="flex:1">
+        <input type="number" value="${c.goal||0}" min="0" max="480" step="5" oninput="updateActGoal(${i},this.value)">
+        <span style="font-size:10px;color:var(--text3)">분/일</span>`;
+      ag.appendChild(row);
+    });
+  }
+
   updateRoleUI();
 }
 
@@ -816,10 +868,18 @@ window.addSubject = function(){
 window.removeSubj = function(i){ editSubjects.splice(i,1); renderSettings(); };
 window.updateSubjectName = function(i, val){ editSubjects[i].name = val; };
 window.updateSubjectGoal = function(i, val){ editSubjects[i].goal = +val; };
-window.updateActGoal = function(id, val){ editActGoals[id] = +val; };
+window.updateActName = function(i, val){ if(editActGoals._cats) editActGoals._cats[i].name = val; };
+window.updateActGoal = function(i, val){ if(editActGoals._cats) editActGoals._cats[i].goal = +val; };
 window.saveSettings = async function(){
   subjects=editSubjects.filter(s=>s.name.trim()).map(s=>({...s,name:s.name.trim()}));
-  actGoals=editActGoals;
+  // 탐구 활동 이름/목표 저장
+  if(editActGoals._cats){
+    editActGoals._cats.forEach(c=>{ actGoals[c.id]=c.goal; });
+    // 이름 변경은 FIXED_CATS에 반영
+    editActGoals._cats.forEach((c,i)=>{ if(FIXED_CATS[i]) FIXED_CATS[i].name=c.name; });
+    delete editActGoals._cats;
+  }
+  actGoals={...editActGoals};
   await saveUserSettings();
   renderGrid(); renderTodaySummary();
   alert('설정이 저장됐어요!');
