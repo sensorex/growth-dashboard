@@ -259,7 +259,7 @@
     </div>
 
     <!-- 부모 전용 섹션 -->
-    <div id="section-parent-only">
+    <div id="section-parent-only" style="display:none">
       <div class="section-label">공부 과목 설정 <span style="font-size:10px;color:var(--text3);font-weight:400">(과목명·색상 관리)</span></div>
       <div class="card">
         <div id="subject-list"></div>
@@ -277,7 +277,7 @@
     </div>
 
     <!-- 아이 전용 섹션 -->
-    <div id="section-child-only">
+    <div id="section-child-only" style="display:none">
       <div class="section-label">과목별 목표 시간 <span style="font-size:10px;color:var(--text3);font-weight:400">(아이가 직접 설정)</span></div>
       <div class="card" id="subject-goals"></div>
       <div class="section-label">탐구 활동 설정 <span style="font-size:10px;color:var(--text3);font-weight:400">(이름·목표 시간 자유 변경)</span></div>
@@ -913,18 +913,19 @@ function renderSettings(){
     });
   }
 
+  // 과목 추가 버튼 onclick 직접 할당 (module 스코프 내부에서 처리)
+  const addBtn = document.getElementById('add-subject-btn');
+  if(addBtn){
+    addBtn.onclick = function(){
+      const used = editSubjects.map(s => s.color);
+      const nc = PALETTE.find(c => !used.includes(c)) || PALETTE[0];
+      editSubjects.push({id: 's_' + Date.now(), name: '새 과목', color: nc, goal: 30});
+      renderSettings();
+    };
+  }
   updateRoleUI();
 }
 
-// 과목 추가 버튼 — addEventListener로 안전하게 처리
-document.addEventListener('click', function(e){
-  if(e.target.closest('#add-subject-btn')){
-    const used=editSubjects.map(s=>s.color);
-    const nc=PALETTE.find(c=>!used.includes(c))||PALETTE[0];
-    editSubjects.push({id:'s_'+Date.now(),name:'새 과목',color:nc,goal:30});
-    renderSettings();
-  }
-});
 window.saveSettings = async function(){
   subjects=editSubjects.filter(s=>s.name.trim()).map(s=>({...s,name:s.name.trim()}));
   // 탐구 활동 이름/목표 저장
