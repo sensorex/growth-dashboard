@@ -795,134 +795,140 @@ async function renderParentView(){
 }
 
 // ── 설정 ──────────────────────────────────────────────
-function renderSettings(){
-  editSubjects=subjects.map(s=>({...s}));
-  editActGoals={...actGoals};
-  editActGoals._cats = FIXED_CATS.map(c=>({id:c.id,name:c.name,color:c.color,goal:actGoals[c.id]||c.goal||0}));
 
-  // ── 부모: 과목명·색상 편집 ──
-  const sl=document.getElementById('subject-list');
-  if(sl){
-    sl.innerHTML='';
-    editSubjects.forEach((s,i)=>{
-      const row=document.createElement('div');
-      row.className='setting-row';
+// 과목 목록만 다시 그리기 (editSubjects 초기화 없이)
+function renderSubjectList(){
+  const sl = document.getElementById('subject-list');
+  if(!sl) return;
+  sl.innerHTML = '';
+  editSubjects.forEach((s, i) => {
+    const row = document.createElement('div');
+    row.className = 'setting-row';
 
-      const dot=document.createElement('div');
-      dot.className='color-dot';
-      dot.id='sc-'+i;
-      dot.style.background=s.color;
-      dot.addEventListener('click',()=>{ selColorTarget={type:'s',i}; });
+    const dot = document.createElement('div');
+    dot.className = 'color-dot';
+    dot.id = 'sc-' + i;
+    dot.style.background = s.color;
+    dot.addEventListener('click', () => { selColorTarget = {type:'s', i}; });
 
-      const nameInput=document.createElement('input');
-      nameInput.type='text';
-      nameInput.value=s.name;
-      nameInput.placeholder='과목명';
-      nameInput.addEventListener('input',()=>{ editSubjects[i].name=nameInput.value; });
+    const nameInput = document.createElement('input');
+    nameInput.type = 'text';
+    nameInput.value = s.name;
+    nameInput.placeholder = '과목명';
+    nameInput.addEventListener('input', () => { editSubjects[i].name = nameInput.value; });
 
-      const delBtn=document.createElement('button');
-      delBtn.innerHTML='<i class="ti ti-trash"></i>';
-      delBtn.style.cssText='padding:4px 8px;font-size:13px;color:var(--red);background:none;border:none;cursor:pointer';
-      delBtn.addEventListener('click',()=>{ editSubjects.splice(i,1); renderSettings(); });
+    const delBtn = document.createElement('button');
+    delBtn.innerHTML = '<i class="ti ti-trash"></i>';
+    delBtn.style.cssText = 'padding:4px 8px;font-size:13px;color:var(--red);background:none;border:none;cursor:pointer';
+    delBtn.addEventListener('click', () => { editSubjects.splice(i, 1); renderSubjectList(); });
 
-      row.append(dot,nameInput,delBtn);
-      sl.appendChild(row);
-    });
-  }
+    row.append(dot, nameInput, delBtn);
+    sl.appendChild(row);
+  });
 
-  // ── 부모: 색상 팔레트 ──
-  const pal=document.getElementById('color-palette');
-  if(pal){
-    pal.innerHTML='';
-    PALETTE.forEach(c=>{
-      const dot=document.createElement('div');
-      dot.className='color-dot';
-      dot.style.background=c;
-      dot.dataset.c=c;
-      dot.addEventListener('click',()=>{
-        if(!selColorTarget) return;
-        if(selColorTarget.type==='s'){
-          editSubjects[selColorTarget.i].color=c;
-          const sc=document.getElementById('sc-'+selColorTarget.i);
-          if(sc) sc.style.background=c;
-        }
-      });
-      pal.appendChild(dot);
-    });
-  }
-
-  // ── 아이: 과목별 목표 시간 ──
-  const sg=document.getElementById('subject-goals');
-  if(sg){
-    sg.innerHTML='';
-    editSubjects.forEach((s,i)=>{
-      const row=document.createElement('div');
-      row.className='setting-row';
-
-      const dot=document.createElement('div');
-      dot.style.cssText=`width:12px;height:12px;border-radius:3px;background:${s.color};flex-shrink:0`;
-
-      const label=document.createElement('span');
-      label.textContent=s.name;
-      label.style.cssText='font-size:13px;font-weight:600;color:var(--text);flex:1';
-
-      const numInput=document.createElement('input');
-      numInput.type='number';
-      numInput.value=s.goal||0;
-      numInput.min=0; numInput.max=300; numInput.step=5;
-      numInput.addEventListener('input',()=>{ editSubjects[i].goal=+numInput.value; });
-
-      const unit=document.createElement('span');
-      unit.textContent='분/일';
-      unit.style.cssText='font-size:10px;color:var(--text3)';
-
-      row.append(dot,label,numInput,unit);
-      sg.appendChild(row);
-    });
-  }
-
-  // ── 아이: 탐구 활동 설정 ──
-  const ag=document.getElementById('activity-goals');
-  if(ag){
-    ag.innerHTML='';
-    editActGoals._cats.forEach((c,i)=>{
-      const row=document.createElement('div');
-      row.className='setting-row';
-
-      const dot=document.createElement('div');
-      dot.style.cssText=`width:12px;height:12px;border-radius:3px;background:${c.color};flex-shrink:0`;
-
-      const nameInput=document.createElement('input');
-      nameInput.type='text';
-      nameInput.value=c.name;
-      nameInput.style.flex='1';
-      nameInput.addEventListener('input',()=>{ editActGoals._cats[i].name=nameInput.value; });
-
-      const numInput=document.createElement('input');
-      numInput.type='number';
-      numInput.value=c.goal||0;
-      numInput.min=0; numInput.max=480; numInput.step=5;
-      numInput.addEventListener('input',()=>{ editActGoals._cats[i].goal=+numInput.value; });
-
-      const unit=document.createElement('span');
-      unit.textContent='분/일';
-      unit.style.cssText='font-size:10px;color:var(--text3)';
-
-      row.append(dot,nameInput,numInput,unit);
-      ag.appendChild(row);
-    });
-  }
-
-  // 과목 추가 버튼 onclick 직접 할당 (module 스코프 내부에서 처리)
+  // 과목 추가 버튼 onclick — module 스코프 안에서 직접 할당
   const addBtn = document.getElementById('add-subject-btn');
   if(addBtn){
     addBtn.onclick = function(){
       const used = editSubjects.map(s => s.color);
       const nc = PALETTE.find(c => !used.includes(c)) || PALETTE[0];
       editSubjects.push({id: 's_' + Date.now(), name: '새 과목', color: nc, goal: 30});
-      renderSettings();
+      renderSubjectList(); // renderSettings() 호출 금지 — 초기화 방지
     };
   }
+}
+
+function renderSettings(){
+  // editSubjects 초기화는 여기서만 (페이지 진입 시 1회)
+  editSubjects = subjects.map(s => ({...s}));
+  editActGoals = {...actGoals};
+  editActGoals._cats = FIXED_CATS.map(c => ({id:c.id, name:c.name, color:c.color, goal:actGoals[c.id]||c.goal||0}));
+
+  // 부모: 과목 목록 렌더
+  renderSubjectList();
+
+  // 부모: 색상 팔레트
+  const pal = document.getElementById('color-palette');
+  if(pal){
+    pal.innerHTML = '';
+    PALETTE.forEach(c => {
+      const dot = document.createElement('div');
+      dot.className = 'color-dot';
+      dot.style.background = c;
+      dot.addEventListener('click', () => {
+        if(!selColorTarget) return;
+        if(selColorTarget.type === 's'){
+          editSubjects[selColorTarget.i].color = c;
+          const sc = document.getElementById('sc-' + selColorTarget.i);
+          if(sc) sc.style.background = c;
+        }
+      });
+      pal.appendChild(dot);
+    });
+  }
+
+  // 아이: 과목별 목표 시간
+  const sg = document.getElementById('subject-goals');
+  if(sg){
+    sg.innerHTML = '';
+    editSubjects.forEach((s, i) => {
+      const row = document.createElement('div');
+      row.className = 'setting-row';
+
+      const dot = document.createElement('div');
+      dot.style.cssText = `width:12px;height:12px;border-radius:3px;background:${s.color};flex-shrink:0`;
+
+      const label = document.createElement('span');
+      label.textContent = s.name;
+      label.style.cssText = 'font-size:13px;font-weight:600;color:var(--text);flex:1';
+
+      const numInput = document.createElement('input');
+      numInput.type = 'number';
+      numInput.value = s.goal || 0;
+      numInput.min = 0; numInput.max = 300; numInput.step = 5;
+      numInput.addEventListener('input', () => { editSubjects[i].goal = +numInput.value; });
+
+      const unit = document.createElement('span');
+      unit.textContent = '분/일';
+      unit.style.cssText = 'font-size:10px;color:var(--text3)';
+
+      row.append(dot, label, numInput, unit);
+      sg.appendChild(row);
+    });
+  }
+
+  // 아이: 탐구 활동 설정
+  const ag = document.getElementById('activity-goals');
+  if(ag){
+    ag.innerHTML = '';
+    editActGoals._cats.forEach((c, i) => {
+      const row = document.createElement('div');
+      row.className = 'setting-row';
+
+      const dot = document.createElement('div');
+      dot.style.cssText = `width:12px;height:12px;border-radius:3px;background:${c.color};flex-shrink:0`;
+
+      const nameInput = document.createElement('input');
+      nameInput.type = 'text';
+      nameInput.value = c.name;
+      nameInput.style.flex = '1';
+      nameInput.addEventListener('input', () => { editActGoals._cats[i].name = nameInput.value; });
+
+      const numInput = document.createElement('input');
+      numInput.type = 'number';
+      numInput.value = c.goal || 0;
+      numInput.min = 0; numInput.max = 480; numInput.step = 5;
+      numInput.addEventListener('input', () => { editActGoals._cats[i].goal = +numInput.value; });
+
+      const unit = document.createElement('span');
+      unit.textContent = '분/일';
+      unit.style.cssText = 'font-size:10px;color:var(--text3)';
+
+      row.append(dot, nameInput, numInput, unit);
+      ag.appendChild(row);
+    });
+  }
+
   updateRoleUI();
 }
 
